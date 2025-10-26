@@ -1,0 +1,130 @@
+
+RUTA_ARCHIVO = "productos.txt"
+
+
+# Función para leer productos desde el archivo
+
+def leer_productos(ruta=RUTA_ARCHIVO):
+    productos = []
+    try:
+        with open(ruta, "r") as archivo:
+            for linea in archivo:
+                linea = linea.strip()
+                if not linea:
+                    continue  # salta líneas vacías
+                partes = linea.split(",")
+                if len(partes) != 3:
+                    continue  # ignora líneas mal formateadas
+                nombre, precio_str, cantidad_str = partes
+                try:
+                    precio = float(precio_str)
+                except ValueError:
+                    precio = 0.0
+                try:
+                    cantidad = int(cantidad_str)
+                except ValueError:
+                    cantidad = 0
+                productos.append({
+                    "nombre": nombre,
+                    "precio": precio,
+                    "cantidad": cantidad
+                })
+    except FileNotFoundError:
+        print(f"El archivo '{ruta}' no existe. Se creará al guardar productos.")
+    return productos
+
+# Función para mostrar productos
+
+def mostrar_productos(productos):
+    if not productos:
+        print("No hay productos para mostrar.")
+        return
+    print("\n=== LISTA DE PRODUCTOS ===")
+    for p in productos:
+        print(f"Producto: {p['nombre']} | Precio: ${p['precio']} | Cantidad: {p['cantidad']}")
+
+
+# Función para pedir un nuevo producto al usuario
+
+def pedir_producto():
+    nombre = input("\nNombre del producto (enter para cancelar): ").strip()
+    if not nombre:
+        return None
+    while True:
+        precio_in = input("Precio: ").strip()
+        try:
+            precio = float(precio_in)
+            break
+        except ValueError:
+            print("Precio inválido. Ingresá un número (ej: 120.5).")
+    while True:
+        cantidad_in = input("Cantidad: ").strip()
+        try:
+            cantidad = int(cantidad_in)
+            break
+        except ValueError:
+            print("Cantidad inválida. Ingresá un número entero (ej: 10).")
+    return {"nombre": nombre, "precio": precio, "cantidad": cantidad}
+
+
+# Función para agregar o actualizar un producto en la lista
+
+def agregar_producto(productos, nuevo):
+    nombre_lower = nuevo["nombre"].strip().lower()
+    for p in productos:
+        if p["nombre"].strip().lower() == nombre_lower:
+            p["cantidad"] += nuevo["cantidad"]
+            p["precio"] = nuevo["precio"]
+            return
+    productos.append(nuevo)
+
+
+# Función para buscar un producto por nombre
+
+def buscar_producto(productos, nombre_buscar):
+    nombre_buscar = nombre_buscar.strip().lower()
+    encontrados = [p for p in productos if p["nombre"].strip().lower() == nombre_buscar]
+    return encontrados
+
+
+# Función para guardar productos en el archivo
+
+def guardar_productos(productos, ruta=RUTA_ARCHIVO):
+    with open(ruta, "w") as archivo:
+        for p in productos:
+            archivo.write(f"{p['nombre']},{p['precio']},{p['cantidad']}\n")
+    print(f"\n Todos los cambios se guardaron correctamente en '{ruta}'.")
+
+# BLOQUE PRINCIPAL
+if __name__ == "__main__":
+
+    #  Leer productos desde el archivo
+    productos = leer_productos()
+
+    #  Mostrar productos actuales
+    mostrar_productos(productos)
+
+    #  Agregar productos desde teclado
+    print("\n=== Agregar productos (enter en nombre para terminar) ===")
+    while True:
+        nuevo = pedir_producto()
+        if nuevo is None:
+            break
+        agregar_producto(productos, nuevo)
+        print(f"Producto '{nuevo['nombre']}' agregado/actualizado.")
+
+    #  Mostrar stock actualizado
+    mostrar_productos(productos)
+
+    #  Guardar productos actualizados en el archivo
+    guardar_productos(productos)
+
+    #  Buscar producto por nombre
+    nombre_buscar = input("\nIngrese el nombre del producto a buscar (enter para omitir): ").strip()
+    if nombre_buscar:
+        encontrados = buscar_producto(productos, nombre_buscar)
+        if encontrados:
+            for p in encontrados:
+                print(f"Producto encontrado: {p['nombre']} | Precio: ${p['precio']} | Cantidad: {p['cantidad']}")
+        else:
+            print("El producto no existe en la lista.")
